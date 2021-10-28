@@ -9,4 +9,7 @@
     <!--- SAM -->
     <include file="$(find lvi_sam)/launch/include/module_sam.launch" />
 
+    <node required="true" pkg="rosbag" type="play" name="rosbag_play"
+          args="--clock /media/$(env USER)/mySataSSD/DATASETS/LVI_DATASETS/garden.bag"/>
+
 </launch>
