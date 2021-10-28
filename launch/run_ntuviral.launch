@@ -1,23 +1,61 @@
 <launch>
 
-    <!--- SAM -->
-    
-    <!-- Lidar odometry param -->
-    <rosparam file="$(find lvi_sam)/config/ntuviral/params_lidar.yaml" command="load" />
+    <arg name="project"       default="viralc"/>
+    <arg name="publish_clock" default="--clock"/>
+    <arg name="autorun"       default="false"/>
 
-    <!-- VINS config -->
-    <param name="vins_config_file" type="string" value="$(find lvi_sam)/config/params_camera.yaml" />
-    
-    <!-- Lidar odometry -->
-    <node pkg="lvi_sam"  type="lvi_sam_imuPreintegration" name="lvi_sam_imuPreintegration" output="screen" respawn="true"/>
-    <node pkg="lvi_sam"  type="lvi_sam_imageProjection"   name="lvi_sam_imageProjection"   output="screen" respawn="true"/>
-    <node pkg="lvi_sam"  type="lvi_sam_featureExtraction" name="lvi_sam_featureExtraction" output="screen" respawn="true"/>
-    <node pkg="lvi_sam"  type="lvi_sam_mapOptmization"    name="lvi_sam_mapOptmization"    output="screen" respawn="true"/>
+    <!-- NTU VIRAL dataset -->
 
-    <!-- Visual feature and odometry -->
-    <node pkg="lvi_sam"  type="lvi_sam_visual_feature"    name="lvi_sam_visual_feature"    output="screen" respawn="true"/>
-    <node pkg="lvi_sam"  type="lvi_sam_visual_odometry"   name="lvi_sam_visual_odometry"   output="screen" respawn="true"/>
-    <node pkg="lvi_sam"  type="lvi_sam_visual_loop"       name="lvi_sam_visual_loop"       output="screen" respawn="true"/>
+    <!-- <arg  name="storage_name" default="mySDSSD"/> -->
+    <arg  name="storage_name" default="mySataSSD"/>
+
+    <!-- EEE -->
+    <arg  name="bag_file"   default="/media/$(env USER)/$(arg storage_name)/DATASETS/NTU_VIRAL/eee_01/eee_01.bag"/>
+    <!-- <arg  name="bag_file"   default="/media/$(env USER)/$(arg storage_name)/DATASETS/NTU_VIRAL/eee_02/eee_02.bag"/> -->
+    <!-- <arg  name="bag_file"   default="/media/$(env USER)/$(arg storage_name)/DATASETS/NTU_VIRAL/eee_03/eee_03.bag"/> -->
+
+    <!-- NYA -->
+    <!-- <arg  name="bag_file"   default="/media/$(env USER)/$(arg storage_name)/DATASETS/NTU_VIRAL/nya_01/nya_01.bag"/> -->
+    <!-- <arg  name="bag_file"   default="/media/$(env USER)/$(arg storage_name)/DATASETS/NTU_VIRAL/nya_02/nya_02.bag"/> -->
+    <!-- <arg  name="bag_file"   default="/media/$(env USER)/$(arg storage_name)/DATASETS/NTU_VIRAL/nya_03/nya_03.bag"/> -->
+
+    <!-- SBS -->
+    <!-- <arg  name="bag_file"   default="/media/$(env USER)/$(arg storage_name)/DATASETS/NTU_VIRAL/sbs_01/sbs_01.bag"/> -->
+    <!-- <arg  name="bag_file"   default="/media/$(env USER)/$(arg storage_name)/DATASETS/NTU_VIRAL/sbs_02/sbs_02.bag"/> -->
+    <!-- <arg  name="bag_file"   default="/media/$(env USER)/$(arg storage_name)/DATASETS/NTU_VIRAL/sbs_03/sbs_03.bag"/> -->
+
+
+    <!--- SAM MODULES-->
+    <group if="true">
+
+        <!-- Lidar odometry param -->
+        <rosparam file="$(find lvi_sam)/config/ntuviral/params_lidar.yaml" command="load" />
+
+        <!-- VINS config -->
+        <param name="vins_config_file" type="string" value="$(find lvi_sam)/ntuviral/config/params_camera.yaml" />
+        
+        <!-- Lidar odometry -->
+        <node pkg="lvi_sam"  type="lvi_sam_imuPreintegration" name="lvi_sam_imuPreintegration" output="screen" respawn="true"/>
+        <node pkg="lvi_sam"  type="lvi_sam_imageProjection"   name="lvi_sam_imageProjection"   output="screen" respawn="true"/>
+        <node pkg="lvi_sam"  type="lvi_sam_featureExtraction" name="lvi_sam_featureExtraction" output="screen" respawn="true"/>
+        <node pkg="lvi_sam"  type="lvi_sam_mapOptmization"    name="lvi_sam_mapOptmization"    output="screen" respawn="true"/>
+
+        <!-- Visual feature and odometry -->
+        <!-- <node pkg="lvi_sam"  type="lvi_sam_visual_feature"    name="lvi_sam_visual_feature"    output="screen" respawn="true"/>
+        <node pkg="lvi_sam"  type="lvi_sam_visual_odometry"   name="lvi_sam_visual_odometry"   output="screen" respawn="true"/>
+        <node pkg="lvi_sam"  type="lvi_sam_visual_loop"       name="lvi_sam_visual_loop"       output="screen" respawn="true"/> -->
+
+        <!-- IMU mod -->
+        <node pkg="lvi_sam" type="lvi_sam_imuMod" name="lvi_sam_imuMod" output="screen" respawn="true">
+            <param name="imu_topic"         type="string" value="/imu/imu" />
+            <rosparam param="tf_Bold_Bnew"> [1,  0,  0, 0,
+                                             0, -1,  0, 0,
+                                             0,  0, -1, 0,
+                                             0,  0,  0, 1]</rosparam>
+        </node>
+
+
+    </group>
 
     <!-- Image conversion -->
     <node pkg="image_transport" type="republish" name="lvi_sam_republish" args="compressed in:=/camera/image_raw raw out:=/camera/image_raw" output="screen" respawn="true"/>
@@ -29,6 +67,6 @@
 
     <!-- Playing the rosbag -->
     <node required="true" pkg="rosbag" type="play" name="rosbag_play"
-          args="--clock /media/$(env USER)/mySataSSD/DATASETS/LVI_DATASETS/garden.bag"/>
+          args="--clock $(arg bag_file)"/>
 
 </launch>

@@ -58,6 +58,7 @@ using namespace std;
 
 typedef pcl::PointXYZI PointType;
 
+enum class SensorType { VELODYNE, OUSTER, AIRSIM };
 
 class ParamServer
 {
@@ -85,6 +86,7 @@ public:
     string savePCDDirectory;
 
     // Velodyne Sensor Configuration: Velodyne
+    SensorType sensor;
     int N_SCAN;
     int Horizon_SCAN;
     string timeField;
@@ -159,6 +161,20 @@ public:
 
         nh.param<bool>(PROJECT_NAME + "/savePCD", savePCD, false);
         nh.param<std::string>(PROJECT_NAME + "/savePCDDirectory", savePCDDirectory, "/tmp/loam/");
+
+        std::string sensorStr;
+        nh.param<std::string>(PROJECT_NAME + "/sensor", sensorStr, "");
+        if (sensorStr == "velodyne")
+            sensor = SensorType::VELODYNE;
+        else if (sensorStr == "ouster")
+            sensor = SensorType::OUSTER;
+        else if (sensorStr == "airsim")
+            sensor = SensorType::AIRSIM;
+        else
+        {
+            ROS_ERROR_STREAM("Invalid sensor type (must be either 'velodyne' or 'ouster'): " << sensorStr);
+            ros::shutdown();
+        }
 
         nh.param<int>(PROJECT_NAME + "/N_SCAN", N_SCAN, 16);
         nh.param<int>(PROJECT_NAME + "/Horizon_SCAN", Horizon_SCAN, 1800);

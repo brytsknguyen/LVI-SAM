@@ -128,3 +128,8 @@ add_executable(${PROJECT_NAME}_mapOptmization src/lidar_odometry/mapOptmization.
 add_dependencies(${PROJECT_NAME}_mapOptmization ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
 target_compile_options(${PROJECT_NAME}_mapOptmization PRIVATE ${OpenMP_CXX_FLAGS})
 target_link_libraries(${PROJECT_NAME}_mapOptmization PRIVATE ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${OpenMP_CXX_FLAGS} gtsam)
+# IMU modder
+add_executable(${PROJECT_NAME}_imuMod src/imuMod.cpp)
+add_dependencies(${PROJECT_NAME}_imuMod ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
+target_compile_options(${PROJECT_NAME}_imuMod PRIVATE ${OpenMP_CXX_FLAGS})
+target_link_libraries(${PROJECT_NAME}_imuMod PRIVATE ${catkin_LIBRARIES})

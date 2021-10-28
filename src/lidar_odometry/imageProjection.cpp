@@ -17,22 +17,22 @@ POINT_CLOUD_REGISTER_POINT_STRUCT (PointXYZIRT,
 )
 
 // Ouster
-// struct PointXYZIRT {
-//     PCL_ADD_POINT4D;
-//     float intensity;
-//     uint32_t t;
-//     uint16_t reflectivity;
-//     uint8_t ring;
-//     uint16_t noise;
-//     uint32_t range;
-//     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-// }EIGEN_ALIGN16;
+struct OusterPointXYZIRT {
+    PCL_ADD_POINT4D;
+    float intensity;
+    uint32_t t;
+    uint16_t reflectivity;
+    uint8_t ring;
+    uint16_t noise;
+    uint32_t range;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+}EIGEN_ALIGN16;
 
-// POINT_CLOUD_REGISTER_POINT_STRUCT(PointXYZIRT,
-//     (float, x, x) (float, y, y) (float, z, z) (float, intensity, intensity)
-//     (uint32_t, t, t) (uint16_t, reflectivity, reflectivity)
-//     (uint8_t, ring, ring) (uint16_t, noise, noise) (uint32_t, range, range)
-// )
+POINT_CLOUD_REGISTER_POINT_STRUCT(OusterPointXYZIRT,
+    (float, x, x) (float, y, y) (float, z, z) (float, intensity, intensity)
+    (uint32_t, t, t) (uint16_t, reflectivity, reflectivity)
+    (uint8_t, ring, ring) (uint16_t, noise, noise) (uint32_t, range, range)
+)
 
 const int queueLength = 500;
 
@@ -68,8 +68,10 @@ private:
     Eigen::Affine3f transStartInverse;
 
     pcl::PointCloud<PointXYZIRT>::Ptr laserCloudIn;
-    pcl::PointCloud<PointType>::Ptr   fullCloud;
-    pcl::PointCloud<PointType>::Ptr   extractedCloud;
+    pcl::PointCloud<OusterPointXYZIRT>::Ptr tmpOusterCloudIn;
+    pcl::PointCloud<PointType>::Ptr tmpAirSimCloudIn;
+    pcl::PointCloud<PointType>::Ptr fullCloud;
+    pcl::PointCloud<PointType>::Ptr extractedCloud;
 
     int deskewFlag;
     cv::Mat rangeMat;
@@ -81,6 +83,7 @@ private:
 
     lvi_sam::cloud_info cloudInfo;
     double timeScanCur;
+    double timeScanEnd;
     double timeScanNext;
     std_msgs::Header cloudHeader;
 
@@ -105,6 +108,8 @@ public:
     void allocateMemory()
     {
         laserCloudIn.reset(new pcl::PointCloud<PointXYZIRT>());
+        tmpOusterCloudIn.reset(new pcl::PointCloud<OusterPointXYZIRT>());
+        tmpAirSimCloudIn.reset(new pcl::PointCloud<PointType>());
         fullCloud.reset(new pcl::PointCloud<PointType>());
         extractedCloud.reset(new pcl::PointCloud<PointType>());
 
@@ -178,18 +183,71 @@ public:
 
         if (cloudQueue.size() <= 2)
             return false;
-        else
-        {
-            currentCloudMsg = cloudQueue.front();
-            cloudQueue.pop_front();
-
-            cloudHeader = currentCloudMsg.header;
-            timeScanCur = cloudHeader.stamp.toSec();
-            timeScanNext = cloudQueue.front().header.stamp.toSec();
-        }
 
         // convert cloud
-        pcl::fromROSMsg(currentCloudMsg, *laserCloudIn);
+        currentCloudMsg = std::move(cloudQueue.front());
+        cloudQueue.pop_front();
+        if (sensor == SensorType::VELODYNE)
+        {
+            pcl::moveFromROSMsg(currentCloudMsg, *laserCloudIn);
+        }
+        else if (sensor == SensorType::OUSTER)
+        {
+            // Convert to Velodyne format
+            pcl::moveFromROSMsg(currentCloudMsg, *tmpOusterCloudIn);
+            laserCloudIn->points.resize(tmpOusterCloudIn->size());
+            laserCloudIn->is_dense = tmpOusterCloudIn->is_dense;
+            for (size_t i = 0; i < tmpOusterCloudIn->size(); i++)
+            {
+                auto &src = tmpOusterCloudIn->points[i];
+                auto &dst = laserCloudIn->points[i];
+                dst.x = src.x;
+                dst.y = src.y;
+                dst.z = src.z;
+                dst.intensity = src.intensity;
+                dst.ring = src.ring;
+                dst.time = src.t * 1e-9f;
+            }
+        }
+        else if (sensor == SensorType::AIRSIM)
+        {
+            static double vert_ang_step = 2*16.611/15;
+            static double vert_ang_step_half = 16.611/15;
+            
+            pcl::fromROSMsg(*laserCloudMsg, *tmpAirSimCloudIn);
+            
+            int cloudsize = tmpAirSimCloudIn->size();
+            
+            laserCloudIn->points.resize(cloudsize);
+            laserCloudIn->is_dense = true;
+
+            // #pragma omp parallel for num_threads(NUM_CORE)
+            for (size_t i = 0; i < cloudsize; i++)
+            {
+                auto &src = tmpAirSimCloudIn->points[i];
+                auto &dst = laserCloudIn->points[i];
+
+                float  sign = (src.z >= 0 ? 1 : -1);
+                double vert_angle = sign*atan2(fabs(src.z), sqrt(src.x*src.x + src.y*src.y)) * 180 / M_PI;
+                dst.x = src.x;
+                dst.y = src.y;
+                dst.z = src.z;
+                dst.intensity = 100;
+                dst.ring = round((vert_angle + 16.611)/vert_ang_step);
+                dst.time = 0;
+            }
+        }
+        else
+        {
+            ROS_ERROR_STREAM("Unknown sensor type: " << int(sensor));
+            ros::shutdown();
+        }
+
+        // get timestamp
+        cloudHeader = currentCloudMsg.header;
+        timeScanCur = cloudHeader.stamp.toSec();
+        timeScanEnd = timeScanCur + laserCloudIn->points.back().time;
+        timeScanNext = cloudQueue.front().header.stamp.toSec();
 
         // check dense flag
         if (laserCloudIn->is_dense == false)
@@ -198,40 +256,43 @@ public:
             ros::shutdown();
         }
 
-        // check ring channel
-        static int ringFlag = 0;
-        if (ringFlag == 0)
+        if (sensor != SensorType::AIRSIM)
         {
-            ringFlag = -1;
-            for (int i = 0; i < (int)currentCloudMsg.fields.size(); ++i)
+            // check ring channel
+            static int ringFlag = 0;
+            if (ringFlag == 0)
             {
-                if (currentCloudMsg.fields[i].name == "ring")
+                ringFlag = -1;
+                for (int i = 0; i < (int)currentCloudMsg.fields.size(); ++i)
                 {
-                    ringFlag = 1;
-                    break;
+                    if (currentCloudMsg.fields[i].name == "ring")
+                    {
+                        ringFlag = 1;
+                        break;
+                    }
+                }
+                if (ringFlag == -1)
+                {
+                    ROS_ERROR("Point cloud ring channel not available, please configure your point cloud data!");
+                    ros::shutdown();
                 }
             }
-            if (ringFlag == -1)
-            {
-                ROS_ERROR("Point cloud ring channel not available, please configure your point cloud data!");
-                ros::shutdown();
-            }
-        }     
 
-        // check point time
-        if (deskewFlag == 0)
-        {
-            deskewFlag = -1;
-            for (int i = 0; i < (int)currentCloudMsg.fields.size(); ++i)
+            // check point time
+            if (deskewFlag == 0)
             {
-                if (currentCloudMsg.fields[i].name == timeField)
+                deskewFlag = -1;
+                for (auto &field : currentCloudMsg.fields)
                 {
-                    deskewFlag = 1;
-                    break;
+                    if (field.name == timeField)
+                    {
+                        deskewFlag = 1;
+                        break;
+                    }
                 }
+                if (deskewFlag == -1)
+                    ROS_WARN("Point cloud timestamp not available, deskew function disabled, system will drift significantly!");
             }
-            if (deskewFlag == -1)
-                ROS_WARN("Point cloud timestamp not available, deskew function disabled, system will drift significantly!");
         }
 
         return true;
@@ -474,6 +535,11 @@ public:
     void projectPointCloud()
     {
         int cloudSize = (int)laserCloudIn->points.size();
+        // int project_size = 0;
+        // int rowRej = 0, colRej = 0, rangeShrRej = 0, rangeMatRej = 0;
+        // vector<int> rowTally(N_SCAN, 0);
+        // vector<int> colTally(Horizon_SCAN, 0);
+
         // range image projection
         for (int i = 0; i < cloudSize; ++i)
         {
@@ -485,10 +551,17 @@ public:
 
             int rowIdn = laserCloudIn->points[i].ring;
             if (rowIdn < 0 || rowIdn >= N_SCAN)
+            {
+                // rowRej++;
                 continue;
+            }
+            // rowTally[rowIdn] += 1;
 
             if (rowIdn % downsampleRate != 0)
+            {
+                // rowRej++;
                 continue;
+            }
 
             float horizonAngle = atan2(thisPoint.x, thisPoint.y) * 180 / M_PI;
 
@@ -498,15 +571,26 @@ public:
                 columnIdn -= Horizon_SCAN;
 
             if (columnIdn < 0 || columnIdn >= Horizon_SCAN)
+            {
+                // colRej++;
                 continue;
+            }
+            
+            // colTally[columnIdn] += 1;
 
             float range = pointDistance(thisPoint);
             
             if (range < 1.0)
+            {
+                // rangeShrRej++;
                 continue;
+            }
 
             if (rangeMat.at<float>(rowIdn, columnIdn) != FLT_MAX)
+            {
+                // rangeMatRej++;
                 continue;
+            }
 
             // for the amsterdam dataset
             // if (range < 6.0 && rowIdn <= 7 && (columnIdn >= 1600 || columnIdn <= 200))
@@ -515,6 +599,8 @@ public:
             //     continue;
 
             rangeMat.at<float>(rowIdn, columnIdn) = range;
+            
+            // project_size++;
 
             thisPoint = deskewPoint(&thisPoint, laserCloudIn->points[i].time); // Velodyne
             // thisPoint = deskewPoint(&thisPoint, (float)laserCloudIn->points[i].t / 1000000000.0); // Ouster
@@ -522,6 +608,17 @@ public:
             int index = columnIdn  + rowIdn * Horizon_SCAN;
             fullCloud->points[index] = thisPoint;
         }
+
+        // printf("Project size: %d. RR: %d, CR: %d, RSR: %d, RMR: %d\n", project_size, rowRej, colRej, rangeShrRej, rangeMatRej);
+        // for(int i = 0 ; i < rowTally.size(); i++)
+        // {
+        //     printf("Row %d: %d\n", i, rowTally[i]);
+        // }
+
+        // for(int i = 0 ; i < colTally.size(); i++)
+        // {
+        //     printf("Col %d: %d\n", i, colTally[i]);
+        // }
     }
 
     void cloudExtraction()
