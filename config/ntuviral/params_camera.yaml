@@ -10,7 +10,7 @@ point_cloud_topic: "lvi_sam/lidar/deskew/cloud_deskewed"
 
 # Lidar Params
 use_lidar:  1                    # whether use depth info from lidar or not
-lidar_skip: 3                    # skip this amount of scans
+lidar_skip: 0                    # skip this amount of scans
 align_camera_lidar_estimation: 1 # align camera and lidar estimation for visualization
 
 # lidar to camera extrinsic
@@ -95,5 +95,5 @@ skip_time: 0.0
 skip_dist: 0.0
 debug_image: 0           # save raw image in loop detector for visualization prupose; you can close this function by setting 0 
 match_image_scale: 0.5
-vocabulary_file:    "/config/brief_k10L6.bin"
-brief_pattern_file: "/config/brief_pattern.yml"
+vocabulary_file:    "/config/ntuviral/brief_k10L6.bin"
+brief_pattern_file: "/config/ntuviral/brief_pattern.yml"

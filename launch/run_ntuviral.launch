@@ -10,7 +10,7 @@
     <arg  name="storage_name" default="mySataSSD"/>
 
     <!-- EEE -->
-    <arg  name="bag_file"   default="/media/$(env USER)/$(arg storage_name)/DATASETS/NTU_VIRAL/eee_01/eee_01.bag"/>
+    <!-- <arg  name="bag_file"   default="/media/$(env USER)/$(arg storage_name)/DATASETS/NTU_VIRAL/eee_01/eee_01.bag"/> -->
     <!-- <arg  name="bag_file"   default="/media/$(env USER)/$(arg storage_name)/DATASETS/NTU_VIRAL/eee_02/eee_02.bag"/> -->
     <!-- <arg  name="bag_file"   default="/media/$(env USER)/$(arg storage_name)/DATASETS/NTU_VIRAL/eee_03/eee_03.bag"/> -->
 
@@ -20,7 +20,7 @@
     <!-- <arg  name="bag_file"   default="/media/$(env USER)/$(arg storage_name)/DATASETS/NTU_VIRAL/nya_03/nya_03.bag"/> -->
 
     <!-- SBS -->
-    <!-- <arg  name="bag_file"   default="/media/$(env USER)/$(arg storage_name)/DATASETS/NTU_VIRAL/sbs_01/sbs_01.bag"/> -->
+    <arg  name="bag_file"   default="/media/$(env USER)/$(arg storage_name)/DATASETS/NTU_VIRAL/sbs_01/sbs_01.bag"/>
     <!-- <arg  name="bag_file"   default="/media/$(env USER)/$(arg storage_name)/DATASETS/NTU_VIRAL/sbs_02/sbs_02.bag"/> -->
     <!-- <arg  name="bag_file"   default="/media/$(env USER)/$(arg storage_name)/DATASETS/NTU_VIRAL/sbs_03/sbs_03.bag"/> -->
 
@@ -30,9 +30,6 @@
 
         <!-- Lidar odometry param -->
         <rosparam file="$(find lvi_sam)/config/ntuviral/params_lidar.yaml" command="load" />
-
-        <!-- VINS config -->
-        <param name="vins_config_file" type="string" value="$(find lvi_sam)/ntuviral/config/params_camera.yaml" />
         
         <!-- Lidar odometry -->
         <node pkg="lvi_sam"  type="lvi_sam_imuPreintegration" name="lvi_sam_imuPreintegration" output="screen" respawn="true"/>
@@ -40,10 +37,13 @@
         <node pkg="lvi_sam"  type="lvi_sam_featureExtraction" name="lvi_sam_featureExtraction" output="screen" respawn="true"/>
         <node pkg="lvi_sam"  type="lvi_sam_mapOptmization"    name="lvi_sam_mapOptmization"    output="screen" respawn="true"/>
 
+        <!-- VINS config -->
+        <param name="vins_config_file" type="string" value="$(find lvi_sam)/config/ntuviral/params_camera.yaml" />
+
         <!-- Visual feature and odometry -->
-        <!-- <node pkg="lvi_sam"  type="lvi_sam_visual_feature"    name="lvi_sam_visual_feature"    output="screen" respawn="true"/>
+        <node pkg="lvi_sam"  type="lvi_sam_visual_feature"    name="lvi_sam_visual_feature"    output="screen" respawn="true"/>
         <node pkg="lvi_sam"  type="lvi_sam_visual_odometry"   name="lvi_sam_visual_odometry"   output="screen" respawn="true"/>
-        <node pkg="lvi_sam"  type="lvi_sam_visual_loop"       name="lvi_sam_visual_loop"       output="screen" respawn="true"/> -->
+        <node pkg="lvi_sam"  type="lvi_sam_visual_loop"       name="lvi_sam_visual_loop"       output="screen" respawn="true"/>
 
         <!-- IMU mod -->
         <node pkg="lvi_sam" type="lvi_sam_imuMod" name="lvi_sam_imuMod" output="screen" respawn="true">
@@ -53,8 +53,6 @@
                                              0,  0, -1, 0,
                                              0,  0,  0, 1]</rosparam>
         </node>
-
-
     </group>
 
     <!-- Image conversion -->
