@@ -47,7 +47,7 @@
 
         <!-- IMU mod -->
         <node pkg="lvi_sam" type="lvi_sam_imuMod" name="lvi_sam_imuMod" output="screen" respawn="true">
-            <param name="imu_topic"         type="string" value="/imu/imu" />
+            <param name="imu_topic" type="string" value="/imu/imu" />
             <rosparam param="tf_Bold_Bnew"> [1,  0,  0, 0,
                                              0, -1,  0, 0,
                                              0,  0, -1, 0,

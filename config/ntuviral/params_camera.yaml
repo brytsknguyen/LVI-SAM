@@ -10,16 +10,16 @@ point_cloud_topic: "lvi_sam/lidar/deskew/cloud_deskewed"
 
 # Lidar Params
 use_lidar:  1                    # whether use depth info from lidar or not
-lidar_skip: 0                    # skip this amount of scans
+lidar_skip: 3                    # skip this amount of scans
 align_camera_lidar_estimation: 1 # align camera and lidar estimation for visualization
 
 # lidar to camera extrinsic
-lidar_to_cam_tx:  0.0
-lidar_to_cam_ty:  0.0
-lidar_to_cam_tz:  0.0
-lidar_to_cam_rx:  0.0
-lidar_to_cam_ry:  0.0
-lidar_to_cam_rz:  0.0
+lidar_to_cam_tx: -0.134174091204535
+lidar_to_cam_ty:  0.039582183171669
+lidar_to_cam_tz: -0.057190557935364
+lidar_to_cam_rx: -2.478731226090302
+lidar_to_cam_ry: -1.546480001936922
+lidar_to_cam_rz:  0.919844685963199
 
 
 # camera model
@@ -53,9 +53,9 @@ extrinsicRotation: !!opencv-matrix
    rows: 3
    cols: 3
    dt: d
-   data: [-0.01916508,  0.01496218, -0.99970437,
-           0.99974371, -0.01176483, -0.01934191,
-          -0.01205075, -0.99981884, -0.01473287]
+   data: [-0.01916508, -0.01496218,  0.99970437,
+          -0.99974371, -0.01176483, -0.01934191,
+           0.01205075, -0.99981884, -0.01473287]
 
 #Translation from camera frame to imu frame, imu^T_cam
 extrinsicTranslation: !!opencv-matrix
@@ -68,18 +68,18 @@ extrinsicTranslation: !!opencv-matrix
 
 
 #feature traker paprameters
-max_cnt: 150             # max feature number in feature tracking
+max_cnt:  150            # max feature number in feature tracking
 min_dist: 20             # min distance between two features 
-freq: 20                 # frequence (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequence will be same as raw image 
+freq:     20             # frequence (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequence will be same as raw image 
 F_threshold: 1.0         # ransac threshold (pixel)
-show_track: 1            # publish tracking image as topic
-equalize: 1              # if image is too dark or light, trun on equalize to find enough features
-fisheye: 0               # if using fisheye, trun on it. A circle mask will be loaded to remove edge noisy points
+show_track:  1           # publish tracking image as topic
+equalize:    1           # if image is too dark or light, trun on equalize to find enough features
+fisheye:     0           # if using fisheye, trun on it. A circle mask will be loaded to remove edge noisy points
 
 #optimization parameters
-max_solver_time: 0.035   # max solver itration time (ms), to guarantee real time
-max_num_iterations: 10   # max solver itrations, to guarantee real time
-keyframe_parallax: 10.0  # keyframe selection threshold (pixel)
+max_solver_time:    0.035   # max solver itration time (ms), to guarantee real time
+max_num_iterations: 10      # max solver itrations, to guarantee real time
+keyframe_parallax:  10.0    # keyframe selection threshold (pixel)
 
 #unsynchronization parameters
 estimate_td: 0           # online estimate time offset between camera and imu
