@@ -7,8 +7,10 @@ Panels:
         - /Links1
         - /Visual Feature1
         - /Visual Odometry1
-        - /Lidar Odometry1
+        - /Visual Odometry1/camera odom1/Status1
+        - /Visual Odometry1/camera odom1/Shape1
         - /Loop Closure1
+        - /Odometry1/Shape1
       Splitter Ratio: 0.5941176414489746
     Tree Height: 303
   - Class: rviz/Selection
@@ -99,9 +101,9 @@ Visualization Manager:
           Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
-          Max Intensity: 205
+          Max Intensity: 1289
           Min Color: 0; 0; 0
-          Min Intensity: 0
+          Min Intensity: 2
           Name: Depth cloud
           Position Transformer: XYZ
           Queue Size: 10
@@ -142,7 +144,7 @@ Visualization Manager:
       Name: Visual Feature
     - Class: rviz/Group
       Displays:
-        - Angle Tolerance: 0.10000000149011612
+        - Angle Tolerance: 0
           Class: rviz/Odometry
           Covariance:
             Orientation:
@@ -160,20 +162,20 @@ Visualization Manager:
               Value: true
             Value: true
           Enabled: true
-          Keep: 100
+          Keep: 1
           Name: camera odom
-          Position Tolerance: 0.10000000149011612
+          Position Tolerance: 0
           Shape:
             Alpha: 1
-            Axes Length: 1
+            Axes Length: 2
             Axes Radius: 0.10000000149011612
             Color: 255; 25; 0
             Head Length: 0.30000001192092896
             Head Radius: 0.10000000149011612
             Shaft Length: 1
             Shaft Radius: 0.05000000074505806
-            Value: Arrow
-          Topic: /lvi_sam/vins/odometry/camera_pose
+            Value: Axes
+          Topic: /lvi_sam/vins/odometry/odometry
           Unreliable: false
           Value: true
         - Alpha: 1
@@ -236,7 +238,7 @@ Visualization Manager:
           Use Fixed Frame: true
           Use rainbow: false
           Value: false
-      Enabled: true
+      Enabled: false
       Name: Visual Odometry
     - Class: rviz/Group
       Displays:
@@ -301,7 +303,7 @@ Visualization Manager:
           Enabled: true
           Invert Rainbow: false
           Max Color: 255; 255; 255
-          Max Intensity: 1739
+          Max Intensity: 1690
           Min Color: 0; 0; 0
           Min Intensity: 2
           Name: Cloud (raw)
@@ -331,7 +333,7 @@ Visualization Manager:
           Enabled: true
           Invert Rainbow: false
           Max Color: 255; 255; 255
-          Max Intensity: 1739
+          Max Intensity: 1035
           Min Color: 0; 0; 0
           Min Intensity: 3
           Name: Dense Map
@@ -492,6 +494,40 @@ Visualization Manager:
           Value: false
       Enabled: true
       Name: Loop Closure
+    - Angle Tolerance: 0
+      Class: rviz/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: true
+      Enabled: true
+      Keep: 1
+      Name: Odometry
+      Position Tolerance: 0
+      Shape:
+        Alpha: 1
+        Axes Length: 2
+        Axes Radius: 0.10000000149011612
+        Color: 255; 25; 0
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Axes
+      Topic: /lvi_sam/lidar/mapping/odometry
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 0; 0; 0
@@ -507,25 +543,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 27.859472274780273
+      Distance: 81.06697082519531
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: 4.8808674812316895
+        Y: -2.9079718589782715
+        Z: 5.018425941467285
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.0403984785079956
+      Pitch: 0.774796724319458
       Target Frame: base_link
       Value: Orbit (rviz)
-      Yaw: 0.0503876619040966
+      Yaw: 3.1303915977478027
     Saved: ~
 Window Geometry:
   Displays:
