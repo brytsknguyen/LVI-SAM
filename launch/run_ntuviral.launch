@@ -56,7 +56,7 @@
     </group>
 
     <!-- Image conversion -->
-    <node pkg="image_transport" type="republish" name="lvi_sam_republish" args="compressed in:=/camera/image_raw raw out:=/camera/image_raw" output="screen" respawn="true"/>
+    <!-- <node pkg="image_transport" type="republish" name="lvi_sam_republish" args="compressed in:=/camera/image_raw raw out:=/camera/image_raw" output="screen" respawn="true"/> -->
 
 
     <!--- Run Rviz-->
